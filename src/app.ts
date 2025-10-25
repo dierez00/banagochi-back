@@ -4,6 +4,7 @@ import cors from 'cors';
 import userRoutes from './routes/user.routes';
 import authRoutes from './routes/auth.route';
 import menuRoutes from './routes/menu.routes';
+import creditCardRoutes from './routes/creditCard.routes'; // agregado
 
 const app: Application = express();
 
@@ -49,5 +50,6 @@ app.options('*', cors({
 app.use('/api/users', userRoutes);
 app.use('/api/menu', menuRoutes);
 app.use('/api/auth', authRoutes);
+app.use('/api/cards', creditCardRoutes); // registrado
 
 export default app;
