@@ -17,6 +17,7 @@ export interface IUser extends Document {
   role: IRole[];
   devices: IDevice[];
   colony?: string;
+  domicilio?: string; // cambiado a string simple
   banorteAccount?: {
     number: string;
     alias?: string;
@@ -59,6 +60,7 @@ const userSchema = new Schema<IUser>({
     },
   ],
   colony: { type: String },
+  domicilio: { type: String }, // cambiado: domicilio ahora es sólo un string
   banorteAccount: {
     number: { type: String },
     alias: { type: String },

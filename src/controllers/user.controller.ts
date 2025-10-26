@@ -9,29 +9,32 @@ import { cache } from "../utils/cache";
 // Create a new user
 export const createUser = async (req: Request, res: Response): Promise<void> => {
   try {
-    let { name, email, password, role, colony } = req.body;
+    let { name, email, password, role, colony, domicilio } = req.body;
 
     // Parse role if it's a string (from multipart/form-data)
-    if (typeof role === 'string') {
+    if (typeof role === "string") {
       try {
-        // Fix malformed JSON: add quotes around property names if missing
-        let fixedRole = role.replace(/\{(\w+):/g, '{"$1":').replace(/:(\w+)\}/g, ':"$1"}');
+        // Fix malformed JSON
+        const fixedRole = role
+          .replace(/\{(\w+):/g, '{"$1":')
+          .replace(/:(\w+)\}/g, ':"$1"}');
         role = JSON.parse(fixedRole);
-      } catch (e) {
-        res.status(400).json({ 
+      } catch {
+        res.status(400).json({
           message: "Invalid role format. Expected format: [{\"type\":\"admin\"}]",
-          received: role 
+          received: role,
         });
         return;
       }
     }
 
     if (!name || !email || !password || !role || !Array.isArray(role)) {
-      res.status(400).json({ message: "All required fields must be provided and role must be an array" });
+      res
+        .status(400)
+        .json({ message: "All required fields must be provided and role must be an array" });
       return;
     }
 
-    // Validar que se haya pasado la verificación biométrica
     if (!req.biometricVerification) {
       res.status(403).json({
         message: "Se requiere verificación biométrica para registrar un nuevo usuario",
@@ -40,14 +43,12 @@ export const createUser = async (req: Request, res: Response): Promise<void> => 
       return;
     }
 
-    // Validate email format
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
     if (!emailRegex.test(email)) {
       res.status(400).json({ message: "Invalid email format" });
       return;
     }
 
-    // Validate roles
     for (const r of role) {
       if (!Object.values(RoleType).includes(r.type)) {
         res.status(400).json({ message: `Invalid role type: ${r.type}` });
@@ -63,20 +64,14 @@ export const createUser = async (req: Request, res: Response): Promise<void> => 
 
     const passwordHash = await bcrypt.hash(password, 10);
 
-    // Generar datos de cuenta Banorte aleatoriamente
-    const generateAccountNumber = (): string => {
-      // Generar número de cuenta de 16 dígitos
-      return Math.floor(1000000000000000 + Math.random() * 9000000000000000).toString();
-    };
+    const generateAccountNumber = (): string =>
+      Math.floor(1000000000000000 + Math.random() * 9000000000000000).toString();
 
-    const generateBalance = (): number => {
-      // Generar balance aleatorio entre 50,000 y 100,000
-      return Math.floor(Math.random() * (100000 - 50000 + 1)) + 50000;
-    };
+    const generateBalance = (): number =>
+      Math.floor(Math.random() * (100000 - 50000 + 1)) + 50000;
 
     const generateAlias = (userName: string): string => {
-      // Generar alias a partir del nombre (primeras letras + número aleatorio)
-      const cleanName = userName.trim().split(' ')[0].toLowerCase();
+      const cleanName = userName.trim().split(" ")[0].toLowerCase();
       const randomNum = Math.floor(Math.random() * 9999);
       return `${cleanName}${randomNum}`;
     };
@@ -87,6 +82,7 @@ export const createUser = async (req: Request, res: Response): Promise<void> => 
       password: passwordHash,
       role,
       colony: colony || undefined,
+      domicilio: domicilio || undefined,
       banorteAccount: {
         number: generateAccountNumber(),
         alias: generateAlias(name),
@@ -114,12 +110,17 @@ export const createUser = async (req: Request, res: Response): Promise<void> => 
         role: user.role,
         status: user.status,
         colony: user.colony,
+        domicilio: user.domicilio,
         banorteAccount: {
           number: user.banorteAccount?.number,
           alias: user.banorteAccount?.alias,
           balance: user.banorteAccount?.balance,
           linked: user.banorteAccount?.linked,
         },
+        savedProjects: user.savedProjects,
+        votedProjects: user.votedProjects,
+        proposedProjects: user.proposedProjects,
+        impactSummary: user.impactSummary,
       },
     });
   } catch (error) {
@@ -148,7 +149,7 @@ export const getAllUsers = async (_req: Request, res: Response): Promise<void> =
   }
 };
 
-// Get a single user by ID
+// Get user by ID
 export const getUserById = async (req: Request, res: Response): Promise<void> => {
   try {
     const { id } = req.params;
@@ -177,11 +178,22 @@ export const getUserById = async (req: Request, res: Response): Promise<void> =>
   }
 };
 
-// Update a user
+// Update user
 export const updateUser = async (req: Request, res: Response): Promise<void> => {
   try {
     const { id } = req.params;
-    const { name, email, role, status }: Partial<IUser> = req.body;
+    const {
+      name,
+      email,
+      role,
+      status,
+      colony,
+      domicilio,
+      savedProjects,
+      votedProjects,
+      proposedProjects,
+      impactSummary,
+    }: Partial<IUser> = req.body;
 
     if (!Types.ObjectId.isValid(id)) {
       res.status(400).json({ message: "Invalid user ID" });
@@ -213,18 +225,18 @@ export const updateUser = async (req: Request, res: Response): Promise<void> => 
     if (name) user.name = name;
     if (email) user.email = email;
     if (typeof status === "boolean") user.status = status;
+    if (colony) user.colony = colony;
+    if (domicilio) user.domicilio = domicilio;
+    if (savedProjects) user.savedProjects = savedProjects;
+    if (votedProjects) user.votedProjects = votedProjects;
+    if (proposedProjects) user.proposedProjects = proposedProjects;
+    if (impactSummary) user.impactSummary = impactSummary;
 
     await user.save();
 
     res.status(200).json({
       message: "User updated successfully",
-      user: {
-        id: user._id,
-        name: user.name,
-        email: user.email,
-        role: user.role,
-        status: user.status,
-      },
+      user,
     });
   } catch (error) {
     console.error("Error:", error);
@@ -234,7 +246,8 @@ export const updateUser = async (req: Request, res: Response): Promise<void> => 
     });
   }
 };
-// Delete a user (logical delete)
+
+// Delete user
 export const deleteUser = async (req: Request, res: Response): Promise<void> => {
   try {
     const { id } = req.params;
@@ -251,19 +264,12 @@ export const deleteUser = async (req: Request, res: Response): Promise<void> => 
     }
 
     user.status = false;
-    user.deleteDate = new Date(); // <--- Establece la fecha de eliminación
+    user.deleteDate = new Date();
     await user.save();
 
     res.status(200).json({
       message: "User logically deleted successfully",
-      user: {
-        id: user._id,
-        name: user.name,
-        email: user.email,
-        role: user.role,
-        status: user.status,
-        deleteDate: user.deleteDate, // <--- Inclúyelo en la respuesta también
-      },
+      user,
     });
   } catch (error) {
     console.error("Error:", error);
@@ -274,7 +280,7 @@ export const deleteUser = async (req: Request, res: Response): Promise<void> => 
   }
 };
 
-// Get all users with the "admin" role
+// Get admins
 export const getAdmins = async (_req: Request, res: Response): Promise<void> => {
   try {
     const admins = await User.find(
@@ -288,7 +294,7 @@ export const getAdmins = async (_req: Request, res: Response): Promise<void> => 
   }
 };
 
-// Get all devices connected for a user
+// Get user devices
 export const getUserDevices = async (req: Request, res: Response): Promise<void> => {
   try {
     const { id } = req.params;
@@ -317,7 +323,7 @@ export const getUserDevices = async (req: Request, res: Response): Promise<void>
   }
 };
 
-// Logout from a specific device
+// Logout from one device
 export const logoutDevice = async (req: Request, res: Response): Promise<void> => {
   try {
     const { id } = req.params;
@@ -339,17 +345,15 @@ export const logoutDevice = async (req: Request, res: Response): Promise<void> =
       return;
     }
 
-    const deviceIndex = user.devices.findIndex(d => d.deviceId === deviceId);
+    const deviceIndex = user.devices.findIndex((d) => d.deviceId === deviceId);
     if (deviceIndex === -1) {
       res.status(404).json({ message: "Device not found" });
       return;
     }
 
-    // Remove device from user's devices array
     user.devices.splice(deviceIndex, 1);
     await user.save();
 
-    // Remove token from cache if it exists
     cache.del(id);
 
     res.status(200).json({
@@ -364,7 +368,7 @@ export const logoutDevice = async (req: Request, res: Response): Promise<void> =
   }
 };
 
-// Logout from all devices
+// Logout all devices
 export const logoutAllDevices = async (req: Request, res: Response): Promise<void> => {
   try {
     const { id } = req.params;
@@ -380,11 +384,9 @@ export const logoutAllDevices = async (req: Request, res: Response): Promise<voi
       return;
     }
 
-    // Clear all devices
     user.devices = [];
     await user.save();
 
-    // Remove token from cache
     cache.del(id);
 
     res.status(200).json({
