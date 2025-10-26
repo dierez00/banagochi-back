@@ -400,3 +400,42 @@ export const logoutAllDevices = async (req: Request, res: Response): Promise<voi
     });
   }
 };
+
+// Get users by colony
+export const getUsersByColony = async (req: Request, res: Response): Promise<void> => {
+  try {
+    const { colony } = req.params;
+
+    if (!colony) {
+      res.status(400).json({ message: "Colony parameter is required" });
+      return;
+    }
+
+    const users = await User.find({ 
+      colony: colony,
+      status: true 
+    }).select("-password");
+
+    if (!users || users.length === 0) {
+      res.status(404).json({ 
+        message: "No users found in this colony",
+        colony: colony,
+        count: 0
+      });
+      return;
+    }
+
+    res.status(200).json({
+      message: "Users retrieved successfully",
+      colony: colony,
+      count: users.length,
+      users,
+    });
+  } catch (error) {
+    console.error("Error:", error);
+    res.status(500).json({
+      message: "An error occurred while getting users by colony",
+      error: error instanceof Error ? error.message : "Unknown error",
+    });
+  }
+};

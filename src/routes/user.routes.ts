@@ -1,5 +1,5 @@
 import { Router } from 'express';
-import { createUser, deleteUser, getAllUsers, getUserById, updateUser, getAdmins, getUserDevices, logoutDevice, logoutAllDevices } from '../controllers/user.controller';
+import { createUser, deleteUser, getAllUsers, getUserById, updateUser, getAdmins, getUserDevices, logoutDevice, logoutAllDevices, getUsersByColony } from '../controllers/user.controller';
 import { uploadBiometricFiles } from '../config/multer';
 import { verifyBiometric } from '../middleware/biometricVerification';
 
@@ -9,6 +9,7 @@ const router = Router();
 router.post('/register', uploadBiometricFiles, verifyBiometric, createUser);
 router.get('/getall', getAllUsers)
 router.get('/get/:id', getUserById)
+router.get('/colony/:colony', getUsersByColony)
 router.delete('/delete/:id', deleteUser);
 router.put('/update/:id', updateUser);
 router.get('/getadmins', getAdmins); 
