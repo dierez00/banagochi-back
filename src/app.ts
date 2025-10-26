@@ -41,7 +41,7 @@ const corsOptions: CorsOptions = {
 app.use(cors(corsOptions));
 
 // Preflight para todas las rutas
-app.options('*', cors({
+app.options('/.*/', cors({
   origin: whitelist,
   credentials: true,
 }));
