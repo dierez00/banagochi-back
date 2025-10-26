@@ -4,53 +4,59 @@ import cors from 'cors';
 import userRoutes from './routes/user.routes';
 import authRoutes from './routes/auth.route';
 import menuRoutes from './routes/menu.routes';
-import creditCardRoutes from './routes/creditCard.routes'; // agregado
+import creditCardRoutes from './routes/creditCard.routes';
 
 const app: Application = express();
 
 // Middlewares
 app.use(express.json());
+app.use(express.urlencoded({ extended: true }));
 
-// Configuración de CORS
-const whitelist = [
-  'http://localhost:5173',
-  'http://localhost:8080',
-  'http://localhost:8081'
-];
-
-interface CorsCallback {
-    (err: Error | null, allow?: boolean): void;
-}
-
-interface CorsOptions {
-    origin: (origin: string | undefined, callback: CorsCallback) => void;
-    credentials: boolean;
-}
-
-const corsOptions: CorsOptions = {
-    origin: (origin: string | undefined, callback: CorsCallback): void => {
-        // Permitir requests sin origin (como Postman) o que estén en la whitelist
-        if (!origin || whitelist.includes(origin)) {
-            callback(null, true);
-        } else {
-            callback(new Error('CORS policy: Origin not allowed'));
-        }
-    },
-    credentials: true,          // Si usas cookies o Authorization headers
-};
-
-app.use(cors(corsOptions));
-
-// Preflight para todas las rutas
-app.options('*', cors({
-  origin: whitelist,
+// 🔓 CORS completamente abierto - Acepta cualquier origen
+app.use(cors({
+  origin: '*', // Permite cualquier origen
   credentials: true,
+  methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS', 'HEAD'],
+  allowedHeaders: ['Content-Type', 'Authorization', 'X-Requested-With', 'Accept', 'Origin'],
+  exposedHeaders: ['Content-Length', 'X-Request-Id'],
+  maxAge: 86400 // 24 horas de caché para preflight
 }));
+
+// Middleware adicional para headers CORS manuales (por si acaso)
+app.use((req, res, next) => {
+  res.header('Access-Control-Allow-Origin', '*');
+  res.header('Access-Control-Allow-Methods', 'GET, POST, PUT, PATCH, DELETE, OPTIONS');
+  res.header('Access-Control-Allow-Headers', 'Content-Type, Authorization, X-Requested-With, Accept, Origin');
+  res.header('Access-Control-Allow-Credentials', 'true');
+  
+  // Manejar preflight OPTIONS
+  if (req.method === 'OPTIONS') {
+    return res.status(200).end();
+  }
+  
+  next();
+});
+
+// Health check
+app.get('/health', (_req, res) => {
+  res.status(200).json({ 
+    status: 'OK', 
+    message: 'Banagochi API is running',
+    timestamp: new Date().toISOString()
+  });
+});
 
 // Rutas
 app.use('/api/users', userRoutes);
 app.use('/api/menu', menuRoutes);
 app.use('/api/auth', authRoutes);
-app.use('/api/cards', creditCardRoutes); // registrado
+app.use('/api/cards', creditCardRoutes);
+
+// Ruta 404
+app.use((_req, res) => {
+  res.status(404).json({ 
+    message: 'Route not found'
+  });
+});
 
 export default app;
