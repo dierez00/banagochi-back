@@ -1,0 +1,43 @@
+{
+  "collection": "Operational-Service-Complete.postman_collection.json",
+  "environment": "Operational-Service.postman_environment.json",
+  "reporters": ["cli", "json", "htmlextra"],
+  "reporter": {
+    "cli": {
+      "noAssertions": false,
+      "noSummary": false,
+      "noFailures": false,
+      "noConsole": false
+    },
+    "json": {
+      "export": "./results/test-results.json"
+    },
+    "htmlextra": {
+      "export": "./results/test-results.html",
+      "title": "Operational Service - Automated Test Results",
+      "logs": true,
+      "darkTheme": true,
+      "showEnvironmentData": true,
+      "skipEnvironmentVars": [],
+      "showGlobalData": false,
+      "skipGlobalVars": [],
+      "skipSensitiveData": true,
+      "showMarkdownLinks": true,
+      "timezone": "America/Mexico_City",
+      "browserTitle": "Operational Service Tests",
+      "displayProgressBar": true
+    }
+  },
+  "bail": false,
+  "delayRequest": 500,
+  "timeout": 60000,
+  "timeoutRequest": 30000,
+  "timeoutScript": 5000,
+  "ignoreRedirects": false,
+  "insecure": false,
+  "color": "auto",
+  "sslClientCert": null,
+  "sslClientKey": null,
+  "sslClientPassphrase": null,
+  "sslExtraCaCerts": null
+}

@@ -1,0 +1,979 @@
+{
+  "info": {
+    "name": "Operational Service - Complete API (Aside, Projects, Transactions)",
+    "_postman_id": "operational-service-complete-2025",
+    "description": "Colección completa para probar todos los endpoints del servicio operacional: Aside, Projects y Transactions",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "variable": [
+    {
+      "key": "base_url",
+      "value": "http://localhost:3000",
+      "type": "string"
+    },
+    {
+      "key": "project_id",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "user_id",
+      "value": "507f1f77bcf86cd799439011",
+      "type": "string"
+    },
+    {
+      "key": "aside_id",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "transaction_id",
+      "value": "",
+      "type": "string"
+    }
+  ],
+  "item": [
+    {
+      "name": "Health Check",
+      "item": [
+        {
+          "name": "Server Health",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Server is running', function() {",
+                  "    pm.response.to.have.status(200);",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/health",
+              "host": ["{{base_url}}"],
+              "path": ["health"]
+            },
+            "description": "Verificar que el servidor esté funcionando correctamente"
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "Projects",
+      "item": [
+        {
+          "name": "1. Create Project",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "if (pm.response.code === 201) {",
+                  "    const response = pm.response.json();",
+                  "    pm.collectionVariables.set('project_id', response.data._id);",
+                  "    pm.test('✅ Project created successfully', function() {",
+                  "        pm.expect(response.success).to.be.true;",
+                  "        pm.expect(response.data).to.have.property('_id');",
+                  "        pm.expect(response.data.title).to.eql('Nueva Plaza Central');",
+                  "        pm.expect(response.data.status).to.eql('VOTING');",
+                  "    });",
+                  "    console.log('📝 Project ID saved:', response.data._id);",
+                  "}"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"title\": \"Nueva Plaza Central\",\n  \"description\": \"Construcción de una plaza pública con áreas verdes, juegos infantiles y espacios para eventos comunitarios\",\n  \"coverImage\": \"https://example.com/plaza-central.jpg\",\n  \"colonia\": \"Centro\",\n  \"proposerId\": \"{{user_id}}\",\n  \"fundingGoal\": 500000,\n  \"fundingDeadline\": \"2025-12-31T23:59:59.999Z\",\n  \"votingStats\": {\n    \"votesNeeded\": 100,\n    \"votesFor\": 0,\n    \"voters\": []\n  },\n  \"supplierInfo\": {\n    \"name\": \"Constructora ABC S.A. de C.V.\",\n    \"account\": \"012345678901234567\"\n  },\n  \"status\": \"VOTING\"\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/api/projects",
+              "host": ["{{base_url}}"],
+              "path": ["api", "projects"]
+            },
+            "description": "Crear un nuevo proyecto con todos los campos requeridos"
+          },
+          "response": []
+        },
+        {
+          "name": "2. Get All Projects",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('✅ Status code is 200', function() {",
+                  "    pm.response.to.have.status(200);",
+                  "});",
+                  "",
+                  "pm.test('✅ Response contains projects array', function() {",
+                  "    const response = pm.response.json();",
+                  "    pm.expect(response.data).to.be.an('array');",
+                  "    pm.expect(response).to.have.property('count');",
+                  "    console.log('📊 Total projects:', response.count);",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/api/projects",
+              "host": ["{{base_url}}"],
+              "path": ["api", "projects"]
+            },
+            "description": "Obtener todos los proyectos activos"
+          },
+          "response": []
+        },
+        {
+          "name": "3. Get All Projects (With Filters)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('✅ All projects match filters', function() {",
+                  "    const response = pm.response.json();",
+                  "    response.data.forEach(project => {",
+                  "        pm.expect(project.status).to.eql('VOTING');",
+                  "        pm.expect(project.colonia).to.eql('Centro');",
+                  "        pm.expect(project.active).to.be.true;",
+                  "    });",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/api/projects?status=VOTING&colonia=Centro&active=true",
+              "host": ["{{base_url}}"],
+              "path": ["api", "projects"],
+              "query": [
+                {
+                  "key": "status",
+                  "value": "VOTING",
+                  "description": "Filter by project status"
+                },
+                {
+                  "key": "colonia",
+                  "value": "Centro",
+                  "description": "Filter by colonia"
+                },
+                {
+                  "key": "active",
+                  "value": "true",
+                  "description": "Filter active projects only"
+                }
+              ]
+            },
+            "description": "Filtrar proyectos por estado, colonia y activos"
+          },
+          "response": []
+        },
+        {
+          "name": "4. Get Project By ID",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('✅ Project found', function() {",
+                  "    pm.response.to.have.status(200);",
+                  "    const response = pm.response.json();",
+                  "    pm.expect(response.data._id).to.eql(pm.collectionVariables.get('project_id'));",
+                  "    pm.expect(response.data).to.have.property('votingStats');",
+                  "    pm.expect(response.data).to.have.property('supplierInfo');",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/api/projects/{{project_id}}",
+              "host": ["{{base_url}}"],
+              "path": ["api", "projects", "{{project_id}}"]
+            },
+            "description": "Obtener un proyecto específico por su ID"
+          },
+          "response": []
+        },
+        {
+          "name": "5. Update Project",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('✅ Project updated successfully', function() {",
+                  "    pm.response.to.have.status(200);",
+                  "    const response = pm.response.json();",
+                  "    pm.expect(response.data.description).to.include('ACTUALIZADA');",
+                  "    pm.expect(response.data.fundingGoal).to.eql(550000);",
+                  "    pm.expect(response.data).to.have.property('updatedDate');",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"description\": \"Construcción de una plaza pública con áreas verdes, juegos infantiles y espacios para eventos comunitarios - DESCRIPCIÓN ACTUALIZADA\",\n  \"fundingGoal\": 550000\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/api/projects/{{project_id}}",
+              "host": ["{{base_url}}"],
+              "path": ["api", "projects", "{{project_id}}"]
+            },
+            "description": "Actualizar campos de un proyecto existente"
+          },
+          "response": []
+        },
+        {
+          "name": "6. Add Vote to Project",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('✅ Vote added successfully', function() {",
+                  "    pm.response.to.have.status(200);",
+                  "    const response = pm.response.json();",
+                  "    pm.expect(response.data.votingStats.votesFor).to.be.above(0);",
+                  "    pm.expect(response.data.votingStats.voters).to.be.an('array');",
+                  "    console.log('🗳️  Current votes:', response.data.votingStats.votesFor, '/', response.data.votingStats.votesNeeded);",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"voterId\": \"{{user_id}}\"\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/api/projects/{{project_id}}/vote",
+              "host": ["{{base_url}}"],
+              "path": ["api", "projects", "{{project_id}}", "vote"]
+            },
+            "description": "Agregar un voto de un usuario al proyecto. Si alcanza el límite de votos, cambia automáticamente a estado FUNDING."
+          },
+          "response": []
+        },
+        {
+          "name": "7. Add Funding to Project",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "if (pm.response.code === 200) {",
+                  "    pm.test('✅ Funding added successfully', function() {",
+                  "        const response = pm.response.json();",
+                  "        pm.expect(response.data.currentAmount).to.be.above(0);",
+                  "        console.log('💰 Current funding:', response.data.currentAmount, '/', response.data.fundingGoal);",
+                  "    });",
+                  "} else if (pm.response.code === 400) {",
+                  "    console.log('⚠️  Project must be in FUNDING state. Add more votes first!');",
+                  "}"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"amount\": 50000\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/api/projects/{{project_id}}/funding",
+              "host": ["{{base_url}}"],
+              "path": ["api", "projects", "{{project_id}}", "funding"]
+            },
+            "description": "Agregar financiamiento al proyecto. El proyecto debe estar en estado FUNDING."
+          },
+          "response": []
+        },
+        {
+          "name": "8. Add Feed Item to Project",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('✅ Feed item added successfully', function() {",
+                  "    pm.response.to.have.status(200);",
+                  "    const response = pm.response.json();",
+                  "    pm.expect(response.data.feed).to.be.an('array');",
+                  "    pm.expect(response.data.feed.length).to.be.above(0);",
+                  "    console.log('📰 Total feed items:', response.data.feed.length);",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"type\": \"UPDATE\",\n  \"text\": \"Se han iniciado los trabajos de excavación en la plaza. Los vecinos han expresado su apoyo al proyecto.\",\n  \"imageUrl\": \"https://example.com/excavacion-plaza.jpg\"\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/api/projects/{{project_id}}/feed",
+              "host": ["{{base_url}}"],
+              "path": ["api", "projects", "{{project_id}}", "feed"]
+            },
+            "description": "Agregar una actualización al feed de noticias del proyecto. Tipos: MILESTONE, ESCROW_PAYMENT, UPDATE, COMPLETED"
+          },
+          "response": []
+        },
+        {
+          "name": "9. Get Projects By Colonia",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('✅ All projects from Centro', function() {",
+                  "    const response = pm.response.json();",
+                  "    response.data.forEach(project => {",
+                  "        pm.expect(project.colonia).to.eql('Centro');",
+                  "    });",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/api/projects/colonia/Centro",
+              "host": ["{{base_url}}"],
+              "path": ["api", "projects", "colonia", "Centro"]
+            },
+            "description": "Obtener todos los proyectos de una colonia específica"
+          },
+          "response": []
+        },
+        {
+          "name": "10. Get Projects By Status",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('✅ All projects have correct status', function() {",
+                  "    const response = pm.response.json();",
+                  "    response.data.forEach(project => {",
+                  "        pm.expect(project.status).to.eql('VOTING');",
+                  "    });",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/api/projects/status/VOTING",
+              "host": ["{{base_url}}"],
+              "path": ["api", "projects", "status", "VOTING"]
+            },
+            "description": "Obtener todos los proyectos con un estado específico: VOTING, FUNDING, IN_PROGRESS, COMPLETED, REJECTED"
+          },
+          "response": []
+        },
+        {
+          "name": "11. Get Projects By Proposer",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/api/projects/proposer/{{user_id}}",
+              "host": ["{{base_url}}"],
+              "path": ["api", "projects", "proposer", "{{user_id}}"]
+            },
+            "description": "Obtener todos los proyectos de un proponente específico"
+          },
+          "response": []
+        },
+        {
+          "name": "12. Soft Delete Project",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('✅ Project soft deleted', function() {",
+                  "    pm.response.to.have.status(200);",
+                  "    const response = pm.response.json();",
+                  "    pm.expect(response.data.active).to.be.false;",
+                  "    pm.expect(response.data).to.have.property('deleteDate');",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "DELETE",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/api/projects/{{project_id}}",
+              "host": ["{{base_url}}"],
+              "path": ["api", "projects", "{{project_id}}"]
+            },
+            "description": "Marcar proyecto como inactivo (soft delete). El proyecto se mantiene en la BD."
+          },
+          "response": []
+        }
+      ],
+      "description": "Endpoints completos para el CRUD de Projects con todas las operaciones especiales"
+    },
+    {
+      "name": "Aside (Apartados)",
+      "item": [
+        {
+          "name": "1. Create Payroll Aside",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "if (pm.response.code === 201) {",
+                  "    const response = pm.response.json();",
+                  "    pm.collectionVariables.set('aside_id', response.data._id);",
+                  "    pm.test('✅ Aside created successfully', function() {",
+                  "        pm.expect(response.success).to.be.true;",
+                  "        pm.expect(response.data).to.have.property('_id');",
+                  "        pm.expect(response.data.status).to.eql('ACTIVE');",
+                  "        pm.expect(response.data.totalContributed).to.eql(0);",
+                  "    });",
+                  "    console.log('💳 Aside ID saved:', response.data._id);",
+                  "}"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"userId\": \"{{user_id}}\",\n  \"projectId\": \"{{project_id}}\",\n  \"amountPerCycle\": 500,\n  \"frequency\": \"BIWEEKLY\"\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/api/asides",
+              "host": ["{{base_url}}"],
+              "path": ["api", "asides"]
+            },
+            "description": "Crear un nuevo apartado de nómina para contribuir automáticamente a un proyecto. Frecuencias: WEEKLY, BIWEEKLY, MONTHLY"
+          },
+          "response": []
+        },
+        {
+          "name": "2. Get User Asides",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('✅ User asides retrieved', function() {",
+                  "    pm.response.to.have.status(200);",
+                  "    const response = pm.response.json();",
+                  "    pm.expect(response.data).to.be.an('array');",
+                  "    console.log('📋 Total asides for user:', response.data.length);",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/api/asides/user/{{user_id}}",
+              "host": ["{{base_url}}"],
+              "path": ["api", "asides", "user", "{{user_id}}"]
+            },
+            "description": "Obtener todos los apartados de un usuario específico"
+          },
+          "response": []
+        },
+        {
+          "name": "3. Get Aside By ID",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('✅ Aside found', function() {",
+                  "    pm.response.to.have.status(200);",
+                  "    const response = pm.response.json();",
+                  "    pm.expect(response.data._id).to.eql(pm.collectionVariables.get('aside_id'));",
+                  "    pm.expect(response.data).to.have.property('userId');",
+                  "    pm.expect(response.data).to.have.property('projectId');",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/api/asides/{{aside_id}}",
+              "host": ["{{base_url}}"],
+              "path": ["api", "asides", "{{aside_id}}"]
+            },
+            "description": "Obtener un apartado específico por su ID"
+          },
+          "response": []
+        },
+        {
+          "name": "4. Get Project Asides",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('✅ Project asides retrieved', function() {",
+                  "    pm.response.to.have.status(200);",
+                  "    const response = pm.response.json();",
+                  "    pm.expect(response.data).to.be.an('array');",
+                  "    console.log('📊 Total asides for project:', response.data.length);",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/api/asides/project/{{project_id}}",
+              "host": ["{{base_url}}"],
+              "path": ["api", "asides", "project", "{{project_id}}"]
+            },
+            "description": "Obtener todos los apartados asociados a un proyecto"
+          },
+          "response": []
+        },
+        {
+          "name": "5. Update Aside Amount",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('✅ Aside amount updated', function() {",
+                  "    pm.response.to.have.status(200);",
+                  "    const response = pm.response.json();",
+                  "    pm.expect(response.data.amountPerCycle).to.eql(750);",
+                  "    console.log('💰 New amount per cycle:', response.data.amountPerCycle);",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "PATCH",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"amountPerCycle\": 750\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/api/asides/{{aside_id}}/amount",
+              "host": ["{{base_url}}"],
+              "path": ["api", "asides", "{{aside_id}}", "amount"]
+            },
+            "description": "Actualizar el monto por ciclo de un apartado activo"
+          },
+          "response": []
+        },
+        {
+          "name": "6. Pause Aside",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('✅ Aside paused', function() {",
+                  "    pm.response.to.have.status(200);",
+                  "    const response = pm.response.json();",
+                  "    pm.expect(response.data.status).to.eql('PAUSED');",
+                  "    console.log('⏸️  Aside status:', response.data.status);",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "PATCH",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/api/asides/{{aside_id}}/pause",
+              "host": ["{{base_url}}"],
+              "path": ["api", "asides", "{{aside_id}}", "pause"]
+            },
+            "description": "Pausar un apartado. Las deducciones se detendrán hasta que se reactive."
+          },
+          "response": []
+        },
+        {
+          "name": "7. Reactivate Aside",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('✅ Aside reactivated', function() {",
+                  "    pm.response.to.have.status(200);",
+                  "    const response = pm.response.json();",
+                  "    pm.expect(response.data.status).to.eql('ACTIVE');",
+                  "    console.log('▶️  Aside status:', response.data.status);",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "PATCH",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/api/asides/{{aside_id}}/reactivate",
+              "host": ["{{base_url}}"],
+              "path": ["api", "asides", "{{aside_id}}", "reactivate"]
+            },
+            "description": "Reactivar un apartado pausado para reanudar las deducciones"
+          },
+          "response": []
+        },
+        {
+          "name": "8. Cancel Aside",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('✅ Aside cancelled', function() {",
+                  "    pm.response.to.have.status(200);",
+                  "    const response = pm.response.json();",
+                  "    pm.expect(response.data.status).to.eql('CANCELLED');",
+                  "    console.log('❌ Aside status:', response.data.status);",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "PATCH",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/api/asides/{{aside_id}}/cancel",
+              "host": ["{{base_url}}"],
+              "path": ["api", "asides", "{{aside_id}}", "cancel"]
+            },
+            "description": "Cancelar un apartado permanentemente. Esta acción no se puede revertir."
+          },
+          "response": []
+        }
+      ],
+      "description": "Gestión completa de apartados de nómina (deducciones automáticas para proyectos)"
+    },
+    {
+      "name": "Transactions",
+      "item": [
+        {
+          "name": "1. Create One-Time Transaction",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "if (pm.response.code === 201) {",
+                  "    const response = pm.response.json();",
+                  "    pm.collectionVariables.set('transaction_id', response.data._id);",
+                  "    pm.test('✅ Transaction created successfully', function() {",
+                  "        pm.expect(response.success).to.be.true;",
+                  "        pm.expect(response.data).to.have.property('_id');",
+                  "        pm.expect(response.data.source).to.eql('ONE_TIME');",
+                  "        pm.expect(response.data.status).to.be.oneOf(['pending', 'completed']);",
+                  "    });",
+                  "    console.log('💸 Transaction ID saved:', response.data._id);",
+                  "}"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"userId\": \"{{user_id}}\",\n  \"projectId\": \"{{project_id}}\",\n  \"amount\": 1000,\n  \"source\": \"ONE_TIME\"\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/api/transactions/one-time",
+              "host": ["{{base_url}}"],
+              "path": ["api", "transactions", "one-time"]
+            },
+            "description": "Crear una transacción única (donación directa) a un proyecto"
+          },
+          "response": []
+        },
+        {
+          "name": "2. Process Payroll Deductions",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('✅ Payroll deductions processed', function() {",
+                  "    pm.response.to.have.status(200);",
+                  "    const response = pm.response.json();",
+                  "    pm.expect(response).to.have.property('processed');",
+                  "    console.log('🔄 Transactions processed:', response.processed);",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/api/transactions/process-payroll",
+              "host": ["{{base_url}}"],
+              "path": ["api", "transactions", "process-payroll"]
+            },
+            "description": "Procesar deducciones de nómina para todos los apartados activos. Este endpoint es usado por un cron job automático."
+          },
+          "response": []
+        },
+        {
+          "name": "3. Get User Transactions",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('✅ User transactions retrieved', function() {",
+                  "    pm.response.to.have.status(200);",
+                  "    const response = pm.response.json();",
+                  "    pm.expect(response.data).to.be.an('array');",
+                  "    console.log('💳 Total transactions for user:', response.data.length);",
+                  "    ",
+                  "    if (response.data.length > 0) {",
+                  "        const totalAmount = response.data.reduce((sum, tx) => sum + tx.amount, 0);",
+                  "        console.log('💰 Total amount contributed:', totalAmount);",
+                  "    }",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/api/transactions/user/{{user_id}}",
+              "host": ["{{base_url}}"],
+              "path": ["api", "transactions", "user", "{{user_id}}"]
+            },
+            "description": "Obtener todas las transacciones de un usuario específico"
+          },
+          "response": []
+        },
+        {
+          "name": "4. Get Project Transactions",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('✅ Project transactions retrieved', function() {",
+                  "    pm.response.to.have.status(200);",
+                  "    const response = pm.response.json();",
+                  "    pm.expect(response.data).to.be.an('array');",
+                  "    console.log('📊 Total transactions for project:', response.data.length);",
+                  "    ",
+                  "    if (response.data.length > 0) {",
+                  "        const totalFunding = response.data.reduce((sum, tx) => sum + tx.amount, 0);",
+                  "        console.log('💰 Total funding received:', totalFunding);",
+                  "    }",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/api/transactions/project/{{project_id}}",
+              "host": ["{{base_url}}"],
+              "path": ["api", "transactions", "project", "{{project_id}}"]
+            },
+            "description": "Obtener todas las transacciones asociadas a un proyecto específico"
+          },
+          "response": []
+        },
+        {
+          "name": "5. Get User Impact Dashboard",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('✅ Dashboard data retrieved', function() {",
+                  "    pm.response.to.have.status(200);",
+                  "    const response = pm.response.json();",
+                  "    pm.expect(response.data).to.have.property('totalContributed');",
+                  "    pm.expect(response.data).to.have.property('projectsSupported');",
+                  "    pm.expect(response.data).to.have.property('activeAsides');",
+                  "    pm.expect(response.data).to.have.property('transactions');",
+                  "    ",
+                  "    console.log('📊 User Impact Dashboard:');",
+                  "    console.log('  💰 Total Contributed:', response.data.totalContributed);",
+                  "    console.log('  🏗️  Projects Supported:', response.data.projectsSupported);",
+                  "    console.log('  💳 Active Asides:', response.data.activeAsides);",
+                  "    console.log('  📝 Total Transactions:', response.data.transactions.length);",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/api/transactions/user/{{user_id}}/dashboard",
+              "host": ["{{base_url}}"],
+              "path": ["api", "transactions", "user", "{{user_id}}", "dashboard"]
+            },
+            "description": "Obtener un dashboard completo del impacto del usuario: total contribuido, proyectos apoyados, apartados activos, etc."
+          },
+          "response": []
+        }
+      ],
+      "description": "Gestión de transacciones: donaciones únicas, deducciones de nómina y dashboards de impacto"
+    }
+  ],
+  "event": [
+    {
+      "listen": "prerequest",
+      "script": {
+        "type": "text/javascript",
+        "exec": [
+          "// Log current request",
+          "console.log('📡 Request:', pm.request.method, pm.request.url.toString());"
+        ]
+      }
+    },
+    {
+      "listen": "test",
+      "script": {
+        "type": "text/javascript",
+        "exec": [
+          "// Log response status",
+          "console.log('📥 Response:', pm.response.code, pm.response.status);"
+        ]
+      }
+    }
+  ]
+}

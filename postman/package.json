@@ -1,0 +1,26 @@
+{
+  "name": "operational-service-postman-tests",
+  "version": "1.0.0",
+  "description": "Postman collection and automated tests for Operational Service API",
+  "scripts": {
+    "test": "node run-tests.js",
+    "test:verbose": "node run-tests.js --verbose",
+    "test:bail": "node run-tests.js --bail",
+    "test:ci": "newman run Operational-Service-Complete.postman_collection.json -e Operational-Service.postman_environment.json --reporters cli,json --reporter-json-export results/ci-results.json --bail",
+    "clean": "rm -rf results/* || del /Q results\\*",
+    "install-newman": "npm install -g newman newman-reporter-htmlextra"
+  },
+  "keywords": [
+    "postman",
+    "newman",
+    "api-testing",
+    "operational-service",
+    "banagochi"
+  ],
+  "author": "Banagochi Team",
+  "license": "MIT",
+  "devDependencies": {
+    "newman": "^6.1.1",
+    "newman-reporter-htmlextra": "^1.23.1"
+  }
+}

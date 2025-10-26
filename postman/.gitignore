@@ -1,0 +1,25 @@
+# Newman test results
+results/
+*.json.log
+
+# Node modules (si instalas newman localmente)
+node_modules/
+
+# Archivos temporales
+*.tmp
+*.temp
+
+# Logs
+*.log
+npm-debug.log*
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+*~

@@ -4,6 +4,9 @@ import projectRoutes from './routes/project.route';
 import transactionRoutes from './routes/transactions.route';
 import bodyParser from 'body-parser';
 
+// Import User model to register it with Mongoose before populate() calls
+import './models/user.model';
+
 const app = express();
 
 app.use(bodyParser.json());
