@@ -40,12 +40,6 @@ const corsOptions: CorsOptions = {
 
 app.use(cors(corsOptions));
 
-// Preflight para todas las rutas
-app.options('*', cors({
-  origin: whitelist,
-  credentials: true,
-}));
-
 app.use(bodyParser.json());
 
 app.use('/api/asides', asideRoutes);
